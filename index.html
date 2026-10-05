@@ -1,11 +1,199 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#090b10">
-<title>ReplyMuse — Context First</title>
-<link rel="stylesheet" href="/styles.css">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<meta name="theme-color" content="#0a0d14" />
+<title>ReplyMuse — Cari Balasan Chat dari Konteks</title>
+<style>
+:root{
+  --bg:#090b11;
+  --panel:#111620;
+  --panel2:#171d29;
+  --panel3:#1f2634;
+  --text:#f7f8fb;
+  --muted:#9098aa;
+  --line:rgba(255,255,255,.085);
+  --accent:#8b5cf6;
+  --accent2:#ec4899;
+  --green:#45d5a7;
+  --red:#ff7280;
+  --yellow:#f3c96d;
+  --shadow:0 24px 80px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; min-height:100vh; color:var(--text);
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  background:
+    radial-gradient(circle at 10% 0%,rgba(139,92,246,.17),transparent 27%),
+    radial-gradient(circle at 100% 10%,rgba(236,72,153,.11),transparent 26%),
+    var(--bg);
+  -webkit-font-smoothing:antialiased;
+}
+button,input,textarea,select{font:inherit}
+button{color:inherit}
+button:disabled{opacity:.55;cursor:not-allowed!important;transform:none!important}
+a{color:inherit}
+.app{width:min(1220px,100%);margin:auto;padding:18px}
+.shell{
+  min-height:calc(100vh - 36px);
+  border:1px solid var(--line);
+  border-radius:30px;
+  background:rgba(16,20,29,.86);
+  backdrop-filter:blur(18px);
+  box-shadow:var(--shadow);
+  overflow:hidden;
+}
+.topbar{
+  height:74px;display:flex;align-items:center;justify-content:space-between;
+  gap:12px;padding:0 20px;border-bottom:1px solid var(--line);
+  background:rgba(7,9,13,.44);
+}
+.brand{display:flex;align-items:center;gap:11px;min-width:0}
+.logo{
+  width:44px;height:44px;border-radius:15px;display:grid;place-items:center;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  box-shadow:0 12px 30px rgba(139,92,246,.24);font-size:21px;flex:0 0 auto;
+}
+.brand b{display:block;font-size:15px;letter-spacing:-.01em}
+.brand span{display:block;font-size:10px;color:var(--muted);margin-top:2px}
+.status{
+  display:flex;align-items:center;gap:7px;border:1px solid var(--line);
+  border-radius:999px;padding:8px 10px;font-size:10px;color:var(--muted);
+  background:rgba(255,255,255,.02);
+}
+.status-dot{width:7px;height:7px;border-radius:50%;background:#6d7482}
+.status.ok .status-dot{background:var(--green);box-shadow:0 0 10px rgba(69,213,167,.55)}
+.status.bad .status-dot{background:var(--red)}
+.main-grid{display:grid;grid-template-columns:410px minmax(0,1fr);min-height:calc(100vh - 110px)}
+.sidebar{padding:18px;border-right:1px solid var(--line);background:rgba(8,10,15,.22)}
+.content{padding:24px;min-width:0}
+.card{
+  border:1px solid var(--line);border-radius:20px;background:rgba(255,255,255,.022);
+  padding:15px;margin-bottom:12px;
+}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.card-head b{font-size:12px}
+.card-head span{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.tabs{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:5px;padding:5px;
+  border:1px solid var(--line);background:#0c1016;border-radius:14px;margin-bottom:12px;
+}
+.tab{border:0;background:transparent;color:var(--muted);border-radius:10px;padding:9px 6px;font-size:10px;font-weight:850;cursor:pointer}
+.tab.active{background:var(--panel3);color:#fff}
+.pane{display:none}.pane.active{display:block}
+.drop{
+  position:relative;min-height:150px;border:1px dashed rgba(255,255,255,.16);
+  border-radius:17px;background:#0d1118;display:grid;place-items:center;text-align:center;
+  padding:20px;cursor:pointer;transition:.18s;
+}
+.drop.drag{border-color:var(--accent);background:rgba(139,92,246,.07)}
+.drop input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.drop .icon{font-size:30px;margin-bottom:7px}
+.drop b{font-size:12px}
+.drop p{margin:6px 0 0;font-size:10px;line-height:1.45;color:var(--muted)}
+.shots{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.shot{
+  position:relative;aspect-ratio:9/16;border:1px solid var(--line);border-radius:13px;
+  overflow:hidden;background:#080a0e;
+}
+.shot img{width:100%;height:100%;object-fit:cover}
+.shot-tools{position:absolute;left:5px;right:5px;bottom:5px;display:flex;justify-content:center;gap:4px}
+.shot-tools button{
+  width:28px;height:28px;border:0;border-radius:8px;background:rgba(8,10,14,.86);
+  cursor:pointer;font-size:11px
+}
+.lbl{display:block;font-size:10px;color:#aab1c0;font-weight:800;margin:0 0 6px}
+textarea,input[type=text],input[type=url],select{
+  width:100%;border:1px solid var(--line);background:var(--panel2);color:var(--text);
+  border-radius:13px;padding:11px 12px;outline:none;transition:.18s;
+}
+textarea:focus,input:focus,select:focus{border-color:rgba(139,92,246,.6);box-shadow:0 0 0 4px rgba(139,92,246,.07)}
+textarea{resize:vertical;min-height:88px;line-height:1.48}
+.help{font-size:9.5px;line-height:1.52;color:var(--muted);margin-top:7px}
+.stack{display:grid;gap:10px}
+.msg-list{display:grid;gap:7px}
+.msg-row{display:grid;grid-template-columns:64px minmax(0,1fr) 34px;gap:6px;align-items:center}
+.msg-row select,.msg-row input{height:38px;padding:8px 9px;font-size:10px}
+.remove{height:34px;border:1px solid var(--line);background:transparent;border-radius:9px;cursor:pointer}
+.btn{
+  border:1px solid var(--line);background:var(--panel2);border-radius:13px;
+  padding:10px 12px;font-size:11px;font-weight:850;cursor:pointer;transition:.18s;
+}
+.btn:hover{transform:translateY(-1px);border-color:rgba(255,255,255,.18)}
+.btn.primary{border:0;background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 12px 28px rgba(139,92,246,.2)}
+.btn.full{width:100%;padding:13px}
+.btn.ghost{background:transparent}
+.range{display:flex;align-items:center;gap:9px}
+.range input{width:100%;accent-color:var(--accent)}
+.range-num{min-width:30px;text-align:center;padding:4px;border:1px solid var(--line);border-radius:8px;background:var(--panel2);font-size:10px;font-weight:900}
+.target-card{border-color:rgba(139,92,246,.32);background:linear-gradient(135deg,rgba(139,92,246,.055),rgba(236,72,153,.025))}
+.hero{padding:2px 0 18px}
+.eyebrow{font-size:9px;color:#bab4ff;text-transform:uppercase;letter-spacing:.12em;font-weight:900}
+.hero h1{font-size:clamp(28px,4vw,44px);line-height:1.03;letter-spacing:-.045em;margin:8px 0 10px}
+.hero p{max-width:690px;margin:0;color:var(--muted);font-size:12px;line-height:1.65}
+.workspace{
+  min-height:420px;border:1px dashed var(--line);border-radius:22px;
+  display:grid;place-items:center;text-align:center;padding:36px;color:var(--muted)
+}
+.workspace .big{display:block;font-size:42px;margin-bottom:9px}
+.workspace b{font-size:13px;color:#dce0e9}
+.workspace p{max-width:420px;margin:7px auto 0;font-size:11px;line-height:1.55}
+.loading{display:none;min-height:420px;border:1px solid var(--line);border-radius:22px;place-items:center;text-align:center;padding:35px}
+.loading.show{display:grid}
+.spinner{width:36px;height:36px;border:3px solid rgba(255,255,255,.1);border-top-color:#a98cff;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 11px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading p{font-size:11px;color:var(--muted);margin:0}
+.error{
+  display:none;margin-bottom:12px;border:1px solid rgba(255,114,128,.26);
+  border-radius:15px;padding:12px;background:rgba(255,114,128,.06);
+  color:#ffc7ce;font-size:10px;line-height:1.5;
+}
+.error.show{display:block}
+.result{display:none}.result.show{display:block}
+.insights{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.insight{
+  border:1px solid var(--line);background:var(--panel2);border-radius:16px;padding:12px
+}
+.insight span{display:block;color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.07em;font-weight:850}
+.insight p{margin:6px 0 0;font-size:11px;line-height:1.48}
+.target-preview{
+  border:1px solid rgba(139,92,246,.25);border-radius:16px;background:rgba(139,92,246,.055);
+  padding:12px;margin-bottom:13px
+}
+.target-preview span{font-size:9px;color:#bdb6ff;text-transform:uppercase;font-weight:900;letter-spacing:.08em}
+.target-preview p{font-size:13px;line-height:1.5;margin:7px 0 0}
+.reply-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.reply{
+  border:1px solid var(--line);background:var(--panel2);border-radius:18px;
+  padding:14px;min-height:160px;transition:.18s
+}
+.reply:hover{transform:translateY(-2px);border-color:rgba(139,92,246,.45)}
+.reply .tag{font-size:9px;color:#c0b9ff;text-transform:uppercase;letter-spacing:.08em;font-weight:900}
+.reply .text{font-size:14px;line-height:1.5;margin:9px 0 12px}
+.reply .why{font-size:9.5px;line-height:1.45;color:var(--muted);padding-top:10px;border-top:1px solid var(--line)}
+.reply .warn{font-size:9.5px;line-height:1.4;color:#dec98e;margin-top:7px}
+.copy{margin-top:10px;border:1px solid var(--line);background:#10141b;border-radius:10px;padding:7px 9px;font-size:9px;font-weight:850;cursor:pointer}
+.settings-note{font-size:9px;color:var(--muted);line-height:1.45;margin-top:7px}
+.toast{
+  position:fixed;left:50%;bottom:22px;transform:translate(-50%,20px);
+  opacity:0;pointer-events:none;background:#fff;color:#101218;padding:10px 14px;
+  border-radius:999px;font-size:10px;font-weight:900;transition:.2s;z-index:50
+}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+@media(max-width:900px){
+  .app{padding:0}.shell{min-height:100vh;border:0;border-radius:0}
+  .main-grid{grid-template-columns:1fr}.sidebar{border-right:0;border-bottom:1px solid var(--line)}
+  .content{padding:18px 14px 32px}.reply-grid{grid-template-columns:1fr}.shots{grid-template-columns:repeat(4,1fr)}
+}
+@media(max-width:540px){
+  .topbar{height:66px;padding:0 13px}.brand span{display:none}.status span{display:none}
+  .sidebar{padding:13px}.content{padding:16px 13px 28px}.shots{grid-template-columns:repeat(3,1fr)}
+  .insights{grid-template-columns:1fr}.hero h1{font-size:30px}.msg-row{grid-template-columns:58px minmax(0,1fr) 32px}
+}
+</style>
 </head>
 <body>
 <div class="app">
@@ -13,53 +201,76 @@
     <header class="topbar">
       <div class="brand">
         <div class="logo">💬</div>
-        <div><b>ReplyMuse</b><span>context first · no fake guessing</span></div>
+        <div>
+          <b>ReplyMuse</b>
+          <span>context-first reply assistant</span>
+        </div>
       </div>
-      <div class="api-state" id="apiState"><i class="api-dot"></i><span id="apiText">cek backend…</span></div>
+      <div class="status" id="apiStatus">
+        <i class="status-dot"></i>
+        <span id="apiStatusText">siap digunakan</span>
+      </div>
     </header>
 
-    <div class="grid">
-      <aside class="side">
-        <section class="section">
-          <div class="section-title"><b>1. Kasih konteks chat</b><span>wajib</span></div>
-          <div class="mode-tabs">
-            <button class="mode active" data-mode="screenshot">📸 Screenshot</button>
-            <button class="mode" data-mode="manual">💬 Tulis chat</button>
+    <div class="main-grid">
+      <aside class="sidebar">
+        <section class="card">
+          <div class="card-head"><b>1. Masukkan percakapan</b><span>wajib</span></div>
+
+          <div class="tabs">
+            <button class="tab active" data-tab="screenshot">📸 Screenshot</button>
+            <button class="tab" data-tab="paste">📋 Paste</button>
+            <button class="tab" data-tab="manual">💬 Manual</button>
           </div>
 
-          <div class="input-pane active" id="pane-screenshot">
+          <div class="pane active" id="pane-screenshot">
             <label class="drop" id="dropZone">
               <input id="imageInput" type="file" accept="image/*" multiple>
-              <div><div class="icon">🖼️</div><b>Upload screenshot percakapan</b><p>Bisa beberapa gambar. Urutkan dari chat paling lama → paling baru.</p></div>
+              <div>
+                <div class="icon">🖼️</div>
+                <b>Upload screenshot chat</b>
+                <p>Bisa beberapa gambar. Urutkan dari percakapan paling lama ke paling baru.</p>
+              </div>
             </label>
+
             <div class="shots" id="shots"></div>
+
             <div style="height:10px"></div>
-            <label class="lbl">Bubble kamu biasanya di…</label>
+            <label class="lbl">Bubble kamu biasanya di</label>
             <select id="perspective">
               <option value="right">Kanan</option>
               <option value="left">Kiri</option>
-              <option value="detect">Tidak tahu / beda aplikasi</option>
+              <option value="detect">Tidak tahu / berbeda</option>
             </select>
-            <div class="help">Screenshot dikirim sebagai gambar ke AI vision. Tidak ada OCR lokal yang menebak-nebak urutan chat.</div>
+            <div class="help">Screenshot akan dikirim ke backend AI sebagai gambar asli, bukan dibaca OCR lokal.</div>
           </div>
 
-          <div class="input-pane" id="pane-manual">
-            <div class="chat-builder" id="chatBuilder"></div>
+          <div class="pane" id="pane-paste">
+            <label class="lbl">Paste percakapan</label>
+            <textarea id="pasteText" placeholder="Dia: lagi apa?
+Aku: lagi santai, kamu?
+Dia: baru pulang, capek banget 😭"></textarea>
+            <div class="help">Gunakan format <b>Dia:</b> dan <b>Aku:</b> supaya struktur percakapan jelas.</div>
+          </div>
+
+          <div class="pane" id="pane-manual">
+            <div class="msg-list" id="msgList"></div>
             <div style="height:8px"></div>
-            <button class="btn subtle" id="addMessage">＋ Tambah bubble</button>
-            <div class="help">Setiap bubble wajib dipilih “Aku” atau “Dia”, jadi konteks tidak ditentukan dengan pola ganjil/genap.</div>
+            <button class="btn ghost" id="addMsg">＋ Tambah bubble</button>
+            <div class="help">Setiap bubble punya label Aku / Dia sehingga aplikasi tidak menebak-nebak pengirim.</div>
           </div>
         </section>
 
-        <section class="section target">
-          <div class="section-title"><b>2. Pesan yang mau dibalas</b><span>wajib</span></div>
+        <section class="card target-card">
+          <div class="card-head"><b>2. Pesan yang ingin dibalas</b><span>wajib</span></div>
           <label class="lbl">Salin persis pesan terakhir dari dia</label>
           <textarea id="targetMessage" placeholder="Contoh: emang kamu gini ke semua cewe?"></textarea>
-          <div class="help">Ini sengaja wajib. AI tidak boleh memilih sendiri pesan mana yang harus dibalas.</div>
+          <div class="help">Pesan target wajib diisi agar AI tidak salah memilih pesan mana yang harus dibalas.</div>
         </section>
 
-        <section class="section stack">
-          <div class="section-title"><b>3. Gaya jawaban</b><span>opsional</span></div>
+        <section class="card stack">
+          <div class="card-head"><b>3. Atur gaya balasan</b><span>opsional</span></div>
+
           <div>
             <label class="lbl">Tahap hubungan</label>
             <select id="stage">
@@ -67,9 +278,10 @@
               <option value="pdkt" selected>PDKT</option>
               <option value="sudah dekat">Sudah dekat</option>
               <option value="pacaran">Pacaran</option>
-              <option value="chat lagi setelah lama">Mulai chat lagi</option>
+              <option value="mulai chat lagi setelah lama">Mulai chat lagi</option>
             </select>
           </div>
+
           <div>
             <label class="lbl">Tone</label>
             <select id="tone">
@@ -81,6 +293,7 @@
               <option value="kalem">Kalem</option>
             </select>
           </div>
+
           <div>
             <label class="lbl">Tujuan</label>
             <select id="goal">
@@ -90,53 +303,413 @@
               <option value="mengarah ke ajakan ketemu secara natural">Arahkan ketemuan</option>
             </select>
           </div>
+
           <div>
             <label class="lbl">Keberanian</label>
-            <div class="range"><input id="boldness" type="range" min="1" max="5" value="3"><div class="range-value" id="boldValue">3</div></div>
+            <div class="range">
+              <input id="boldness" type="range" min="1" max="5" value="3">
+              <div class="range-num" id="boldNum">3</div>
+            </div>
           </div>
+
           <div>
             <label class="lbl">Konteks tambahan</label>
-            <textarea id="extraContext" placeholder="Contoh: kami baru kenal 4 hari, dia orangnya suka becanda…"></textarea>
+            <textarea id="extraContext" placeholder="Contoh: baru kenal 4 hari, dia suka becanda…"></textarea>
           </div>
         </section>
 
-        <div class="error" id="sideError"></div>
-        <button class="btn primary full" id="generate">✨ Baca konteks & cari jawaban</button>
+        <section class="card">
+          <div class="card-head"><b>Backend AI</b><span>publish</span></div>
+          <label class="lbl">Endpoint API</label>
+          <input id="apiUrl" type="url" placeholder="/api/reply">
+          <div class="settings-note">Default: <b>/api/reply</b>. Jika backend AI kamu berada di domain lain, isi URL lengkap di sini. Nilai disimpan hanya di browser.</div>
+        </section>
+
+        <div class="error" id="errorBox"></div>
+        <button class="btn primary full" id="generateBtn">✨ Baca konteks & cari jawaban</button>
       </aside>
 
-      <main class="main">
+      <main class="content">
         <div class="hero">
           <div class="eyebrow">Balasan berdasarkan konteks</div>
-          <h1>Bukan generator gombal random.</h1>
-          <p>Aplikasi membaca percakapan terlebih dulu, lalu membuat balasan untuk <b>pesan yang kamu tentukan</b>. Ia tidak akan memberi “persentase suka” atau mengaku tahu isi hati orang lain.</p>
+          <h1>Masukin chat dulu.<br>Baru cari jawabannya.</h1>
+          <p>Versi ini sengaja tidak memakai generator lokal yang pura-pura paham. Kalau backend AI belum tersambung, aplikasi akan bilang dengan jelas—bukan mengarang balasan acak.</p>
         </div>
 
-        <div class="empty" id="emptyState">
+        <div class="workspace" id="emptyState">
           <div>
             <span class="big">👀</span>
-            <b>Masukkan chat di sebelah kiri.</b>
-            <p>Upload screenshot atau tulis bubble percakapan, isi pesan target, lalu klik cari jawaban.</p>
+            <b>Konteks dulu, baru jawaban.</b>
+            <p>Upload screenshot, paste percakapan, atau masukkan bubble manual. Lalu isi pesan terakhir yang benar-benar ingin kamu balas.</p>
           </div>
         </div>
 
         <div class="loading" id="loading">
-          <div><div class="spinner"></div><b>Membaca konteks…</b><p>AI sedang mencocokkan target pesan dengan percakapanmu.</p></div>
+          <div>
+            <div class="spinner"></div>
+            <b>Sedang membaca percakapan…</b>
+            <p>AI mencocokkan screenshot / chat dengan pesan target.</p>
+          </div>
         </div>
 
-        <div class="result" id="result">
-          <div class="insight">
-            <div class="insight-card"><span>Konteks singkat</span><p id="summary"></p></div>
-            <div class="insight-card"><span>Nada percakapan</span><p id="toneRead"></p></div>
+        <section class="result" id="result">
+          <div class="insights">
+            <div class="insight">
+              <span>Konteks singkat</span>
+              <p id="summary"></p>
+            </div>
+            <div class="insight">
+              <span>Nada percakapan</span>
+              <p id="toneRead"></p>
+            </div>
           </div>
-          <div class="insight-card" style="margin-bottom:14px"><span>Arah yang disarankan</span><p id="note"></p></div>
-          <div class="target-show"><span>Pesan yang sedang dibalas</span><p id="targetShow"></p></div>
-          <div class="replies" id="replies"></div>
-        </div>
+
+          <div class="insight" style="margin-bottom:12px">
+            <span>Arah yang disarankan</span>
+            <p id="conversationNote"></p>
+          </div>
+
+          <div class="target-preview">
+            <span>Pesan yang sedang dibalas</span>
+            <p id="targetPreview"></p>
+          </div>
+
+          <div class="reply-grid" id="replyGrid"></div>
+        </section>
       </main>
     </div>
   </div>
 </div>
+
 <div class="toast" id="toast">Tersalin ✨</div>
-<script src="/app.js"></script>
+
+<script>
+(() => {
+  "use strict";
+
+  const $ = (s) => document.querySelector(s);
+  const $$ = (s) => [...document.querySelectorAll(s)];
+
+  const state = {
+    tab: "screenshot",
+    images: [],
+    messages: []
+  };
+
+  const savedApi = localStorage.getItem("replymuse_api_url") || "/api/reply";
+  $("#apiUrl").value = savedApi;
+
+  function escapeHtml(value = "") {
+    return String(value).replace(/[&<>"']/g, (c) => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+    }[c]));
+  }
+
+  function toast(message) {
+    const el = $("#toast");
+    el.textContent = message;
+    el.classList.add("show");
+    clearTimeout(window.__toast);
+    window.__toast = setTimeout(() => el.classList.remove("show"), 1500);
+  }
+
+  function showError(message = "") {
+    const el = $("#errorBox");
+    el.textContent = message;
+    el.classList.toggle("show", Boolean(message));
+  }
+
+  function setStatus(type, text) {
+    const el = $("#apiStatus");
+    el.classList.remove("ok", "bad");
+    if (type) el.classList.add(type);
+    $("#apiStatusText").textContent = text;
+  }
+
+  $$(".tab").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      state.tab = btn.dataset.tab;
+      $$(".tab").forEach((b) => b.classList.toggle("active", b === btn));
+      $$(".pane").forEach((p) => p.classList.remove("active"));
+      $("#pane-" + state.tab).classList.add("active");
+      showError("");
+    });
+  });
+
+  $("#boldness").addEventListener("input", (e) => {
+    $("#boldNum").textContent = e.target.value;
+  });
+
+  $("#apiUrl").addEventListener("change", (e) => {
+    const value = e.target.value.trim() || "/api/reply";
+    e.target.value = value;
+    localStorage.setItem("replymuse_api_url", value);
+    setStatus("", "endpoint disimpan");
+  });
+
+  // Screenshot handling
+  const dropZone = $("#dropZone");
+  const imageInput = $("#imageInput");
+
+  imageInput.addEventListener("change", (e) => addFiles([...e.target.files]));
+  dropZone.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    dropZone.classList.add("drag");
+  });
+  dropZone.addEventListener("dragleave", () => dropZone.classList.remove("drag"));
+  dropZone.addEventListener("drop", (e) => {
+    e.preventDefault();
+    dropZone.classList.remove("drag");
+    addFiles([...e.dataTransfer.files].filter((f) => f.type.startsWith("image/")));
+  });
+
+  function addFiles(files) {
+    const room = 6 - state.images.length;
+    files.filter((f) => f.type.startsWith("image/")).slice(0, Math.max(0, room)).forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        state.images.push({ name: file.name, dataUrl: reader.result });
+        renderImages();
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function moveImage(index, delta) {
+    const next = index + delta;
+    if (next < 0 || next >= state.images.length) return;
+    [state.images[index], state.images[next]] = [state.images[next], state.images[index]];
+    renderImages();
+  }
+
+  function renderImages() {
+    const box = $("#shots");
+    box.innerHTML = "";
+
+    state.images.forEach((img, index) => {
+      const el = document.createElement("div");
+      el.className = "shot";
+      el.innerHTML = `
+        <img alt="${escapeHtml(img.name)}" src="${img.dataUrl}">
+        <div class="shot-tools">
+          <button type="button" title="Geser ke depan">↑</button>
+          <button type="button" title="Geser ke belakang">↓</button>
+          <button type="button" title="Hapus">×</button>
+        </div>`;
+      const [up, down, remove] = el.querySelectorAll("button");
+      up.onclick = (e) => { e.preventDefault(); moveImage(index, -1); };
+      down.onclick = (e) => { e.preventDefault(); moveImage(index, 1); };
+      remove.onclick = (e) => {
+        e.preventDefault();
+        state.images.splice(index, 1);
+        renderImages();
+      };
+      box.appendChild(el);
+    });
+  }
+
+  // Manual builder
+  function addMessage(role = "them", text = "") {
+    state.messages.push({
+      id: (crypto.randomUUID ? crypto.randomUUID() : Date.now() + "_" + Math.random()),
+      role,
+      text
+    });
+    renderMessages();
+  }
+
+  function renderMessages() {
+    const box = $("#msgList");
+    box.innerHTML = "";
+
+    state.messages.forEach((msg) => {
+      const row = document.createElement("div");
+      row.className = "msg-row";
+      row.innerHTML = `
+        <select>
+          <option value="them" ${msg.role === "them" ? "selected" : ""}>Dia</option>
+          <option value="me" ${msg.role === "me" ? "selected" : ""}>Aku</option>
+        </select>
+        <input type="text" placeholder="Isi bubble…" value="${escapeHtml(msg.text)}">
+        <button class="remove" type="button">×</button>
+      `;
+
+      const role = row.querySelector("select");
+      const text = row.querySelector("input");
+
+      role.addEventListener("change", () => msg.role = role.value);
+      text.addEventListener("input", () => msg.text = text.value);
+      row.querySelector(".remove").addEventListener("click", () => {
+        state.messages = state.messages.filter((x) => x.id !== msg.id);
+        renderMessages();
+      });
+
+      box.appendChild(row);
+    });
+  }
+
+  $("#addMsg").addEventListener("click", () => addMessage("them", ""));
+  addMessage("them", "");
+  addMessage("me", "");
+  addMessage("them", "");
+
+  function parsePaste(text) {
+    return text
+      .split(/\n+/)
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => {
+        let m = line.match(/^(dia|cewe|cewek)\s*[:\-]\s*(.+)$/i);
+        if (m) return { role: "them", text: m[2].trim() };
+        m = line.match(/^(aku|saya|gue|gw)\s*[:\-]\s*(.+)$/i);
+        if (m) return { role: "me", text: m[2].trim() };
+        return null;
+      })
+      .filter(Boolean)
+      .slice(-30);
+  }
+
+  function buildPayload() {
+    const targetMessage = $("#targetMessage").value.trim();
+    if (!targetMessage) throw new Error("Isi dulu pesan dari dia yang benar-benar mau dibalas.");
+
+    let messages = [];
+    let images = [];
+
+    if (state.tab === "screenshot") {
+      if (!state.images.length) throw new Error("Upload minimal satu screenshot percakapan.");
+      images = state.images.map((x) => x.dataUrl);
+    }
+
+    if (state.tab === "paste") {
+      messages = parsePaste($("#pasteText").value);
+      if (!messages.length) throw new Error('Format paste belum terbaca. Gunakan format "Dia: ..." dan "Aku: ...".');
+    }
+
+    if (state.tab === "manual") {
+      messages = state.messages
+        .map((m) => ({ role: m.role, text: m.text.trim() }))
+        .filter((m) => m.text);
+      if (!messages.length) throw new Error("Isi minimal satu bubble percakapan.");
+    }
+
+    return {
+      messages,
+      images,
+      targetMessage,
+      perspective: $("#perspective").value,
+      relationshipStage: $("#stage").value,
+      tone: $("#tone").value,
+      goal: $("#goal").value,
+      boldness: Number($("#boldness").value),
+      extraContext: $("#extraContext").value.trim()
+    };
+  }
+
+  async function copyText(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      const temp = document.createElement("textarea");
+      temp.value = text;
+      document.body.appendChild(temp);
+      temp.select();
+      document.execCommand("copy");
+      temp.remove();
+    }
+    toast("Balasan tersalin ✨");
+  }
+
+  function renderResult(data) {
+    $("#summary").textContent = data.summary || "Konteks berhasil dibaca.";
+    $("#toneRead").textContent = data.tone_read || "Tidak ada pembacaan nada.";
+    $("#conversationNote").textContent = data.conversation_note || "Pilih opsi yang paling sesuai dengan gaya bicaramu.";
+    $("#targetPreview").textContent = data.target_message || $("#targetMessage").value.trim();
+
+    const box = $("#replyGrid");
+    box.innerHTML = "";
+
+    const replies = Array.isArray(data.replies) ? data.replies : [];
+    if (!replies.length) {
+      box.innerHTML = '<div class="insight"><span>Belum ada balasan</span><p>Backend tidak mengembalikan opsi balasan.</p></div>';
+      return;
+    }
+
+    replies.forEach((reply, i) => {
+      const card = document.createElement("article");
+      card.className = "reply";
+      card.innerHTML = `
+        <div class="tag">✦ ${escapeHtml(reply.label || `Opsi ${i+1}`)}</div>
+        <div class="text">${escapeHtml(reply.text || "")}</div>
+        <div class="why">${escapeHtml(reply.why || "")}</div>
+        ${reply.caution ? `<div class="warn">⚠ ${escapeHtml(reply.caution)}</div>` : ""}
+        <button class="copy" type="button">Salin balasan</button>
+      `;
+      card.querySelector(".copy").addEventListener("click", () => copyText(reply.text || ""));
+      box.appendChild(card);
+    });
+  }
+
+  $("#generateBtn").addEventListener("click", async () => {
+    showError("");
+
+    let payload;
+    try {
+      payload = buildPayload();
+    } catch (err) {
+      showError(err.message);
+      return;
+    }
+
+    let apiUrl = $("#apiUrl").value.trim() || "/api/reply";
+    localStorage.setItem("replymuse_api_url", apiUrl);
+
+    $("#emptyState").style.display = "none";
+    $("#result").classList.remove("show");
+    $("#loading").classList.add("show");
+    $("#generateBtn").disabled = true;
+    setStatus("", "menghubungi AI…");
+
+    try {
+      const response = await fetch(apiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const raw = await response.text();
+      let data;
+      try {
+        data = raw ? JSON.parse(raw) : {};
+      } catch {
+        throw new Error("Endpoint merespons, tetapi format respons bukan JSON.");
+      }
+
+      if (!response.ok) {
+        throw new Error(data.error || `Backend error (${response.status}).`);
+      }
+
+      renderResult(data);
+      $("#result").classList.add("show");
+      setStatus("ok", "AI terhubung");
+    } catch (err) {
+      $("#emptyState").style.display = "grid";
+      setStatus("bad", "AI belum terhubung");
+
+      const msg = err && err.message ? err.message : "Gagal menghubungi backend.";
+      showError(
+        msg.includes("Failed to fetch")
+          ? "Website berhasil tampil, tetapi backend AI belum tersambung. Jika ini static hosting, isi URL backend pada kolom Endpoint API. Jangan masukkan OpenAI API key langsung ke index.html."
+          : msg
+      );
+    } finally {
+      $("#loading").classList.remove("show");
+      $("#generateBtn").disabled = false;
+    }
+  });
+
+  setStatus("", "UI siap");
+})();
+</script>
 </body>
 </html>
