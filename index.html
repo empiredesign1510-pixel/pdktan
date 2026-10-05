@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#090b10">
+<title>ReplyMuse — Context First</title>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<div class="app">
+  <div class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo">💬</div>
+        <div><b>ReplyMuse</b><span>context first · no fake guessing</span></div>
+      </div>
+      <div class="api-state" id="apiState"><i class="api-dot"></i><span id="apiText">cek backend…</span></div>
+    </header>
+
+    <div class="grid">
+      <aside class="side">
+        <section class="section">
+          <div class="section-title"><b>1. Kasih konteks chat</b><span>wajib</span></div>
+          <div class="mode-tabs">
+            <button class="mode active" data-mode="screenshot">📸 Screenshot</button>
+            <button class="mode" data-mode="manual">💬 Tulis chat</button>
+          </div>
+
+          <div class="input-pane active" id="pane-screenshot">
+            <label class="drop" id="dropZone">
+              <input id="imageInput" type="file" accept="image/*" multiple>
+              <div><div class="icon">🖼️</div><b>Upload screenshot percakapan</b><p>Bisa beberapa gambar. Urutkan dari chat paling lama → paling baru.</p></div>
+            </label>
+            <div class="shots" id="shots"></div>
+            <div style="height:10px"></div>
+            <label class="lbl">Bubble kamu biasanya di…</label>
+            <select id="perspective">
+              <option value="right">Kanan</option>
+              <option value="left">Kiri</option>
+              <option value="detect">Tidak tahu / beda aplikasi</option>
+            </select>
+            <div class="help">Screenshot dikirim sebagai gambar ke AI vision. Tidak ada OCR lokal yang menebak-nebak urutan chat.</div>
+          </div>
+
+          <div class="input-pane" id="pane-manual">
+            <div class="chat-builder" id="chatBuilder"></div>
+            <div style="height:8px"></div>
+            <button class="btn subtle" id="addMessage">＋ Tambah bubble</button>
+            <div class="help">Setiap bubble wajib dipilih “Aku” atau “Dia”, jadi konteks tidak ditentukan dengan pola ganjil/genap.</div>
+          </div>
+        </section>
+
+        <section class="section target">
+          <div class="section-title"><b>2. Pesan yang mau dibalas</b><span>wajib</span></div>
+          <label class="lbl">Salin persis pesan terakhir dari dia</label>
+          <textarea id="targetMessage" placeholder="Contoh: emang kamu gini ke semua cewe?"></textarea>
+          <div class="help">Ini sengaja wajib. AI tidak boleh memilih sendiri pesan mana yang harus dibalas.</div>
+        </section>
+
+        <section class="section stack">
+          <div class="section-title"><b>3. Gaya jawaban</b><span>opsional</span></div>
+          <div>
+            <label class="lbl">Tahap hubungan</label>
+            <select id="stage">
+              <option value="baru kenal">Baru kenal</option>
+              <option value="pdkt" selected>PDKT</option>
+              <option value="sudah dekat">Sudah dekat</option>
+              <option value="pacaran">Pacaran</option>
+              <option value="chat lagi setelah lama">Mulai chat lagi</option>
+            </select>
+          </div>
+          <div>
+            <label class="lbl">Tone</label>
+            <select id="tone">
+              <option value="natural">Natural</option>
+              <option value="playful">Playful</option>
+              <option value="flirty ringan">Flirty ringan</option>
+              <option value="gombal tapi tidak cringe">Gombal</option>
+              <option value="perhatian">Perhatian</option>
+              <option value="kalem">Kalem</option>
+            </select>
+          </div>
+          <div>
+            <label class="lbl">Tujuan</label>
+            <select id="goal">
+              <option value="membuat obrolan lanjut">Biar chat lanjut</option>
+              <option value="membangun kedekatan">Makin dekat</option>
+              <option value="flirting ringan">Tes flirting</option>
+              <option value="mengarah ke ajakan ketemu secara natural">Arahkan ketemuan</option>
+            </select>
+          </div>
+          <div>
+            <label class="lbl">Keberanian</label>
+            <div class="range"><input id="boldness" type="range" min="1" max="5" value="3"><div class="range-value" id="boldValue">3</div></div>
+          </div>
+          <div>
+            <label class="lbl">Konteks tambahan</label>
+            <textarea id="extraContext" placeholder="Contoh: kami baru kenal 4 hari, dia orangnya suka becanda…"></textarea>
+          </div>
+        </section>
+
+        <div class="error" id="sideError"></div>
+        <button class="btn primary full" id="generate">✨ Baca konteks & cari jawaban</button>
+      </aside>
+
+      <main class="main">
+        <div class="hero">
+          <div class="eyebrow">Balasan berdasarkan konteks</div>
+          <h1>Bukan generator gombal random.</h1>
+          <p>Aplikasi membaca percakapan terlebih dulu, lalu membuat balasan untuk <b>pesan yang kamu tentukan</b>. Ia tidak akan memberi “persentase suka” atau mengaku tahu isi hati orang lain.</p>
+        </div>
+
+        <div class="empty" id="emptyState">
+          <div>
+            <span class="big">👀</span>
+            <b>Masukkan chat di sebelah kiri.</b>
+            <p>Upload screenshot atau tulis bubble percakapan, isi pesan target, lalu klik cari jawaban.</p>
+          </div>
+        </div>
+
+        <div class="loading" id="loading">
+          <div><div class="spinner"></div><b>Membaca konteks…</b><p>AI sedang mencocokkan target pesan dengan percakapanmu.</p></div>
+        </div>
+
+        <div class="result" id="result">
+          <div class="insight">
+            <div class="insight-card"><span>Konteks singkat</span><p id="summary"></p></div>
+            <div class="insight-card"><span>Nada percakapan</span><p id="toneRead"></p></div>
+          </div>
+          <div class="insight-card" style="margin-bottom:14px"><span>Arah yang disarankan</span><p id="note"></p></div>
+          <div class="target-show"><span>Pesan yang sedang dibalas</span><p id="targetShow"></p></div>
+          <div class="replies" id="replies"></div>
+        </div>
+      </main>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast">Tersalin ✨</div>
+<script src="/app.js"></script>
+</body>
+</html>
